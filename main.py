@@ -1,6 +1,21 @@
-import time
+import os
+import threading
+from flask import Flask
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, LinkPreviewOptions
+from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler
 
+# --- Flask Web Server Setup (For Render Port Binding) ---
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "RIAZ 99 Bot is Live 24/7!"
+
+def run_flask():
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
+
+# --- Telegram Bot Configurations ---
 BANNER_URL = "https://files.catbox.moe/itqjoi.jpg"
 
 def get_main_menu_keyboard():
@@ -67,15 +82,28 @@ async def history_callback(update, context):
         "<i>Select which history you want to check:</i>"
     )
     await query.edit_message_text(text, parse_mode="HTML", reply_markup=history_keyboard)
-    import os
-from flask import Flask
 
-app = Flask(__name__)
-
-@app.route('/')
-def home():
-    return "Bot is Live!"
-
+# --- Execution Entry Point ---
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    # Flask server in background thread
+    threading.Thread(target=run_flask, daemon=True).start()
+
+    # Get Token from Render Environment Variables
+    TOKEN = os.environ.get("BOT_TOKEN")
+    
+    if not TOKEN:
+        print("Error: BOT_TOKEN not found in environment variables!")
+        exit(1)
+
+    # Initialize Telegram Application
+    app_bot = ApplicationBuilder().token(TOKEN).build()
+
+    # Handlers Registration
+    app_bot.add_handler(CommandHandler("start", main_menu))
+    app_bot.add_handler(CallbackQueryHandler(main_menu, pattern="^main_menu$"))
+    app_bot.add_handler(CallbackQueryHandler(support_callback, pattern="^support$"))
+    app_bot.add_handler(CallbackQueryHandler(history_callback, pattern="^history$"))
+
+    # Start Bot Polling
+    print("Bot is polling...")
+    app_bot.run_polling()
