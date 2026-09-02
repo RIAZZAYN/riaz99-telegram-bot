@@ -50,6 +50,44 @@ async def main_menu(update, context):
     else:
         await update.message.reply_text(text, parse_mode="HTML", reply_markup=get_main_menu_keyboard(), link_preview_options=preview_options)
 
+async def buy_now_callback(update, context):
+    query = update.callback_query
+    await query.answer()
+
+    buy_keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("💬 Contact Admin to Buy", url="https://t.me/riaz_zayn")],
+        [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu", style="danger")]
+    ])
+
+    text = (
+        "<b>🛒 PRODUCTS & PANELS STORE</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "<i>Available items:</i>\n"
+        "• Bala Mods Panel\n"
+        "• Gaming Keys & Subscriptions\n\n"
+        "<b>Contact Admin directly to purchase:</b>\n"
+        "<b>Telegram:</b> @riaz_zayn\n"
+        "<b>WhatsApp:</b> +91 88761 78391"
+    )
+    await query.edit_message_text(text, parse_mode="HTML", reply_markup=buy_keyboard)
+
+async def how_to_use_callback(update, context):
+    query = update.callback_query
+    await query.answer()
+
+    how_keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu", style="danger")]
+    ])
+
+    text = (
+        "<b>❓ HOW TO USE THE BOT</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "1. Tap <b>Add Balance</b> to deposit money via Admin.\n"
+        "2. Once balance is updated, select <b>Buy Now</b> to purchase keys/panels.\n"
+        "3. Check <b>Deposit + Key History</b> to view your past orders."
+    )
+    await query.edit_message_text(text, parse_mode="HTML", reply_markup=how_keyboard)
+
 async def support_callback(update, context):
     query = update.callback_query
     await query.answer()
@@ -117,8 +155,11 @@ if __name__ == "__main__":
 
     app_bot = ApplicationBuilder().token(TOKEN).build()
 
+    # Registered Handlers
     app_bot.add_handler(CommandHandler("start", main_menu))
     app_bot.add_handler(CallbackQueryHandler(main_menu, pattern="^main_menu$"))
+    app_bot.add_handler(CallbackQueryHandler(buy_now_callback, pattern="^buy_now$"))
+    app_bot.add_handler(CallbackQueryHandler(how_to_use_callback, pattern="^how_to_use$"))
     app_bot.add_handler(CallbackQueryHandler(support_callback, pattern="^support$"))
     app_bot.add_handler(CallbackQueryHandler(history_callback, pattern="^history$"))
     app_bot.add_handler(CallbackQueryHandler(add_balance_callback, pattern="^add_balance$"))
