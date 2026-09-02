@@ -17,7 +17,9 @@ def run_flask():
 
 # --- Telegram Bot Configurations ---
 BANNER_URL = "https://files.catbox.moe/itqjoi.jpg"
-UPI_ID = "8876178391@paytm"
+# Tera exact verified UPI ID aur custom QR image URL
+UPI_ID = "riaz99@slc"
+QR_IMAGE_URL = "https://files.catbox.moe/0v25q7.jpg"  # (Aap chahe toh ise apne uploaded QR image link se replace kar sakte hain)
 
 def get_main_menu_keyboard():
     return InlineKeyboardMarkup([
@@ -106,7 +108,6 @@ async def keypad_press_callback(update, context):
     query = update.callback_query
     action = query.data.replace("kp_", "")
     
-    # Confirm button alag se handle hoga
     if action == "confirm":
         await keypad_confirm_action(query, context)
         return
@@ -152,23 +153,22 @@ async def handle_text_input(update, context):
             context.user_data['custom_amount_str'] = text_input
             context.user_data['in_keypad_mode'] = False
             amount = int(text_input)
-            
-            # Send QR code as new message for chat text input
-            qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa={UPI_ID}%26pn=RIAZ99%26am={amount}%26cu=INR"
+
             pay_keyboard = InlineKeyboardMarkup([
                 [InlineKeyboardButton("🟢 ✅ VERIFY PAYMENT", url="https://t.me/riaz_zayn", style="success")],
                 [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu", style="danger")]
             ])
             text = (
-                f'<a href="{qr_url}">&#8203;</a>'
+                f'<a href="{QR_IMAGE_URL}">&#8203;</a>'
                 "<b>⚡ RIAZ 99 STORE — UPI QR ACTIVE ⚡</b>\n"
                 "━━━━━━━━━━━━━━━━━━━━━━\n"
                 "<b>Merchant Name:</b> RIAZ 99 STORE\n\n"
                 f"Scan & pay exactly <code>₹{amount}.00</code>\n\n"
+                f"<b>UPI ID:</b> <code>{UPI_ID}</code>\n\n"
                 "Tap <b>VERIFY PAYMENT</b> below after completing payment.\n\n"
                 "<i>⏳ Session expires in 5 minutes.</i>"
             )
-            preview_options = LinkPreviewOptions(is_disabled=False, url=qr_url, prefer_large_media=True)
+            preview_options = LinkPreviewOptions(is_disabled=False, url=QR_IMAGE_URL, prefer_large_media=True)
             await update.message.reply_text(text, parse_mode="HTML", reply_markup=pay_keyboard, link_preview_options=preview_options)
 
 # --- QR CODE GENERATOR SCREEN ---
@@ -179,23 +179,22 @@ async def preset_amount_callback(update, context):
     await show_qr_screen_direct(query, amount)
 
 async def show_qr_screen_direct(query, amount):
-    qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa={UPI_ID}%26pn=RIAZ99%26am={amount}%26cu=INR"
-
     pay_keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("🟢 ✅ VERIFY PAYMENT", url="https://t.me/riaz_zayn", style="success")],
         [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu", style="danger")]
     ])
 
     text = (
-        f'<a href="{qr_url}">&#8203;</a>'
+        f'<a href="{QR_IMAGE_URL}">&#8203;</a>'
         "<b>⚡ RIAZ 99 STORE — UPI QR ACTIVE ⚡</b>\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         "<b>Merchant Name:</b> RIAZ 99 STORE\n\n"
         f"Scan & pay exactly <code>₹{amount}.00</code>\n\n"
+        f"<b>UPI ID:</b> <code>{UPI_ID}</code>\n\n"
         "Tap <b>VERIFY PAYMENT</b> below after completing payment.\n\n"
         "<i>⏳ Session expires in 5 minutes.</i>"
     )
-    preview_options = LinkPreviewOptions(is_disabled=False, url=qr_url, prefer_large_media=True)
+    preview_options = LinkPreviewOptions(is_disabled=False, url=QR_IMAGE_URL, prefer_large_media=True)
     await query.edit_message_text(text, parse_mode="HTML", reply_markup=pay_keyboard, link_preview_options=preview_options)
 
 # --- OTHER SECTIONS ---
