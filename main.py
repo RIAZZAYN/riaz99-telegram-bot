@@ -20,10 +20,10 @@ BANNER_URL = "https://files.catbox.moe/itqjoi.jpg"
 
 def get_main_menu_keyboard():
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("🛒 Buy Now (Products & Panels)", callback_data="buy_now", style="success")],
+        [InlineKeyboardButton("🟢 🛒 Buy Now (Products & Panels)", callback_data="buy_now", style="success")],
         [InlineKeyboardButton("📜 Deposit + Key History", callback_data="history")],
-        [InlineKeyboardButton("💳 Add Balance (₹)", callback_data="add_balance", style="success"), InlineKeyboardButton("❓ How To Use (Video Tutorial)", callback_data="how_to_use")],
-        [InlineKeyboardButton("💬 Support (Admin)", callback_data="support", style="danger")]
+        [InlineKeyboardButton("🟢 💳 Add Balance (₹)", callback_data="add_balance", style="success"), InlineKeyboardButton("❓ How To Use", callback_data="how_to_use")],
+        [InlineKeyboardButton("🔴 💬 Support (Admin)", callback_data="support", style="danger")]
     ])
 
 async def main_menu(update, context):
@@ -55,15 +55,17 @@ async def support_callback(update, context):
     await query.answer()
 
     support_keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("✈️ Telegram Support", url="https://t.me/your_username")],
-        [InlineKeyboardButton("📸 Instagram", url="https://instagram.com/your_handle"), InlineKeyboardButton("💬 WhatsApp", url="https://wa.me/your_number")],
-        [InlineKeyboardButton("⬅️ Back to Main Menu", callback_data="main_menu", style="danger")]
+        [InlineKeyboardButton("✈️ Telegram Support", url="https://t.me/riaz_zayn")],
+        [InlineKeyboardButton("📸 Instagram", url="https://www.instagram.com/riaz_zayn/"), InlineKeyboardButton("💬 WhatsApp", url="https://wa.me/918876178391")],
+        [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu", style="danger")]
     ])
 
     text = (
         "<b>📞 RIAZ 99 OFFICIAL SUPPORT</b>\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "<i>If you face any payment or key issues, contact us directly through the links below:</i>"
+        "<i>If you face any payment or key issues, contact us directly through the links below:</i>\n\n"
+        "<b>Telegram:</b> @riaz_zayn\n"
+        "<b>WhatsApp:</b> +91 88761 78391"
     )
     await query.edit_message_text(text, parse_mode="HTML", reply_markup=support_keyboard)
 
@@ -73,7 +75,7 @@ async def history_callback(update, context):
 
     history_keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("📥 Deposit History", callback_data="view_deposits"), InlineKeyboardButton("🔑 Key History", callback_data="view_keys")],
-        [InlineKeyboardButton("⬅️ Back to Main Menu", callback_data="main_menu", style="danger")]
+        [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu", style="danger")]
     ])
 
     text = (
@@ -83,27 +85,43 @@ async def history_callback(update, context):
     )
     await query.edit_message_text(text, parse_mode="HTML", reply_markup=history_keyboard)
 
+async def add_balance_callback(update, context):
+    query = update.callback_query
+    await query.answer()
+
+    balance_keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("✈️ Contact via Telegram", url="https://t.me/riaz_zayn")],
+        [InlineKeyboardButton("💬 Contact via WhatsApp", url="https://wa.me/918876178391")],
+        [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu", style="danger")]
+    ])
+
+    text = (
+        "<b>💳 ADD BALANCE TO YOUR ACCOUNT</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "<i>Contact Admin to get payment details (UPI/QR Code) & verify your deposit:</i>\n\n"
+        "<b>Telegram Admin:</b> @riaz_zayn\n"
+        "<b>WhatsApp Admin:</b> +91 88761 78391\n\n"
+        "<i>Send screenshot after completing payment!</i>"
+    )
+    await query.edit_message_text(text, parse_mode="HTML", reply_markup=balance_keyboard)
+
 # --- Execution Entry Point ---
 if __name__ == "__main__":
-    # Flask server in background thread
     threading.Thread(target=run_flask, daemon=True).start()
 
-    # Get Token from Render Environment Variables
     TOKEN = os.environ.get("BOT_TOKEN")
     
     if not TOKEN:
         print("Error: BOT_TOKEN not found in environment variables!")
         exit(1)
 
-    # Initialize Telegram Application
     app_bot = ApplicationBuilder().token(TOKEN).build()
 
-    # Handlers Registration
     app_bot.add_handler(CommandHandler("start", main_menu))
     app_bot.add_handler(CallbackQueryHandler(main_menu, pattern="^main_menu$"))
     app_bot.add_handler(CallbackQueryHandler(support_callback, pattern="^support$"))
     app_bot.add_handler(CallbackQueryHandler(history_callback, pattern="^history$"))
+    app_bot.add_handler(CallbackQueryHandler(add_balance_callback, pattern="^add_balance$"))
 
-    # Start Bot Polling
     print("Bot is polling...")
     app_bot.run_polling()
