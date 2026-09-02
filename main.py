@@ -1,7 +1,7 @@
 import os
 import threading
 from flask import Flask
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, LinkPreviewOptions
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 
 # --- Flask Web Server Setup ---
@@ -17,9 +17,8 @@ def run_flask():
 
 # --- Telegram Bot Configurations ---
 BANNER_URL = "https://files.catbox.moe/itqjoi.jpg"
-# Tera exact verified UPI ID aur custom QR image URL
 UPI_ID = "riaz99@slc"
-QR_IMAGE_URL = "https://files.catbox.moe/0v25q7.jpg"  # (Aap chahe toh ise apne uploaded QR image link se replace kar sakte hain)
+QR_IMAGE_URL = "https://files.catbox.moe/zfa47a.jpg"
 
 def get_main_menu_keyboard():
     return InlineKeyboardMarkup([
@@ -34,7 +33,6 @@ async def main_menu(update, context):
     context.user_data['in_keypad_mode'] = False
 
     text = (
-        f'<a href="{BANNER_URL}">&#8203;</a>'
         "<b>👑 RIAZ 99 STORE 👑</b>\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         "<blockquote expandable>\n"
@@ -48,13 +46,18 @@ async def main_menu(update, context):
         "👇 <b>Select an option from the menu below:</b>"
     )
 
-    preview_options = LinkPreviewOptions(is_disabled=False, url=BANNER_URL, prefer_large_media=True)
-
     if update.callback_query:
-        await update.callback_query.answer()
-        await update.callback_query.edit_message_text(text, parse_mode="HTML", reply_markup=get_main_menu_keyboard(), link_preview_options=preview_options)
+        query = update.callback_query
+        await query.answer()
+        try:
+            await query.message.edit_media(
+                media=InputMediaPhoto(media=BANNER_URL, caption=text, parse_mode="HTML"),
+                reply_markup=get_main_menu_keyboard()
+            )
+        except Exception:
+            await query.edit_message_text(text, parse_mode="HTML", reply_markup=get_main_menu_keyboard())
     else:
-        await update.message.reply_text(text, parse_mode="HTML", reply_markup=get_main_menu_keyboard(), link_preview_options=preview_options)
+        await update.message.reply_photo(photo=BANNER_URL, caption=text, parse_mode="HTML", reply_markup=get_main_menu_keyboard())
 
 # --- ADD BALANCE MENU ---
 async def add_balance_callback(update, context):
@@ -75,7 +78,14 @@ async def add_balance_callback(update, context):
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         "Choose a quick preset amount or tap <b>⌨️ TYPE CUSTOM AMOUNT</b> to open keypad:"
     )
-    await query.edit_message_text(text, parse_mode="HTML", reply_markup=keyboard)
+    
+    try:
+        await query.message.edit_media(
+            media=InputMediaPhoto(media=BANNER_URL, caption=text, parse_mode="HTML"),
+            reply_markup=keyboard
+        )
+    except Exception:
+        await query.edit_message_text(text, parse_mode="HTML", reply_markup=keyboard)
 
 # --- KEYPAD LOGIC ---
 def build_keypad_keyboard():
@@ -102,7 +112,13 @@ async def keypad_open_callback(update, context):
         "Use the keypad below or type amount directly in chat.\n\n"
         "<i>Min: ₹1.00 | Max: ₹50,000.00</i>"
     )
-    await query.edit_message_text(text, parse_mode="HTML", reply_markup=build_keypad_keyboard())
+    try:
+        await query.message.edit_media(
+            media=InputMediaPhoto(media=BANNER_URL, caption=text, parse_mode="HTML"),
+            reply_markup=build_keypad_keyboard()
+        )
+    except Exception:
+        await query.edit_message_text(text, parse_mode="HTML", reply_markup=build_keypad_keyboard())
 
 async def keypad_press_callback(update, context):
     query = update.callback_query
@@ -133,7 +149,13 @@ async def keypad_press_callback(update, context):
         "Use the keypad below or type amount directly in chat.\n\n"
         "<i>Min: ₹1.00 | Max: ₹50,000.00</i>"
     )
-    await query.edit_message_text(text, parse_mode="HTML", reply_markup=build_keypad_keyboard())
+    try:
+        await query.message.edit_media(
+            media=InputMediaPhoto(media=BANNER_URL, caption=text, parse_mode="HTML"),
+            reply_markup=build_keypad_keyboard()
+        )
+    except Exception:
+        await query.edit_message_text(text, parse_mode="HTML", reply_markup=build_keypad_keyboard())
 
 async def keypad_confirm_action(query, context):
     amt_str = context.user_data.get('custom_amount_str', "0")
@@ -159,7 +181,6 @@ async def handle_text_input(update, context):
                 [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu", style="danger")]
             ])
             text = (
-                f'<a href="{QR_IMAGE_URL}">&#8203;</a>'
                 "<b>⚡ RIAZ 99 STORE — UPI QR ACTIVE ⚡</b>\n"
                 "━━━━━━━━━━━━━━━━━━━━━━\n"
                 "<b>Merchant Name:</b> RIAZ 99 STORE\n\n"
@@ -168,8 +189,7 @@ async def handle_text_input(update, context):
                 "Tap <b>VERIFY PAYMENT</b> below after completing payment.\n\n"
                 "<i>⏳ Session expires in 5 minutes.</i>"
             )
-            preview_options = LinkPreviewOptions(is_disabled=False, url=QR_IMAGE_URL, prefer_large_media=True)
-            await update.message.reply_text(text, parse_mode="HTML", reply_markup=pay_keyboard, link_preview_options=preview_options)
+            await update.message.reply_photo(photo=QR_IMAGE_URL, caption=text, parse_mode="HTML", reply_markup=pay_keyboard)
 
 # --- QR CODE GENERATOR SCREEN ---
 async def preset_amount_callback(update, context):
@@ -185,7 +205,6 @@ async def show_qr_screen_direct(query, amount):
     ])
 
     text = (
-        f'<a href="{QR_IMAGE_URL}">&#8203;</a>'
         "<b>⚡ RIAZ 99 STORE — UPI QR ACTIVE ⚡</b>\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         "<b>Merchant Name:</b> RIAZ 99 STORE\n\n"
@@ -194,8 +213,14 @@ async def show_qr_screen_direct(query, amount):
         "Tap <b>VERIFY PAYMENT</b> below after completing payment.\n\n"
         "<i>⏳ Session expires in 5 minutes.</i>"
     )
-    preview_options = LinkPreviewOptions(is_disabled=False, url=QR_IMAGE_URL, prefer_large_media=True)
-    await query.edit_message_text(text, parse_mode="HTML", reply_markup=pay_keyboard, link_preview_options=preview_options)
+
+    try:
+        await query.message.edit_media(
+            media=InputMediaPhoto(media=QR_IMAGE_URL, caption=text, parse_mode="HTML"),
+            reply_markup=pay_keyboard
+        )
+    except Exception:
+        await query.message.reply_photo(photo=QR_IMAGE_URL, caption=text, parse_mode="HTML", reply_markup=pay_keyboard)
 
 # --- OTHER SECTIONS ---
 async def buy_now_callback(update, context):
@@ -215,7 +240,13 @@ async def buy_now_callback(update, context):
         "<b>Telegram:</b> @riaz_zayn\n"
         "<b>WhatsApp:</b> +91 88761 78391"
     )
-    await query.edit_message_text(text, parse_mode="HTML", reply_markup=buy_keyboard)
+    try:
+        await query.message.edit_media(
+            media=InputMediaPhoto(media=BANNER_URL, caption=text, parse_mode="HTML"),
+            reply_markup=buy_keyboard
+        )
+    except Exception:
+        await query.edit_message_text(text, parse_mode="HTML", reply_markup=buy_keyboard)
 
 async def how_to_use_callback(update, context):
     query = update.callback_query
@@ -230,7 +261,13 @@ async def how_to_use_callback(update, context):
         "2. Pay via UPI and send screenshot to Admin.\n"
         "3. Balance add hone ke baad <b>Buy Now</b> se keys/panels kharidein!"
     )
-    await query.edit_message_text(text, parse_mode="HTML", reply_markup=how_keyboard)
+    try:
+        await query.message.edit_media(
+            media=InputMediaPhoto(media=BANNER_URL, caption=text, parse_mode="HTML"),
+            reply_markup=how_keyboard
+        )
+    except Exception:
+        await query.edit_message_text(text, parse_mode="HTML", reply_markup=how_keyboard)
 
 async def support_callback(update, context):
     query = update.callback_query
@@ -247,7 +284,13 @@ async def support_callback(update, context):
         "<b>Telegram:</b> @riaz_zayn\n"
         "<b>WhatsApp:</b> +91 88761 78391"
     )
-    await query.edit_message_text(text, parse_mode="HTML", reply_markup=support_keyboard)
+    try:
+        await query.message.edit_media(
+            media=InputMediaPhoto(media=BANNER_URL, caption=text, parse_mode="HTML"),
+            reply_markup=support_keyboard
+        )
+    except Exception:
+        await query.edit_message_text(text, parse_mode="HTML", reply_markup=support_keyboard)
 
 async def history_callback(update, context):
     query = update.callback_query
@@ -261,7 +304,13 @@ async def history_callback(update, context):
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         "<i>Select which history you want to check:</i>"
     )
-    await query.edit_message_text(text, parse_mode="HTML", reply_markup=history_keyboard)
+    try:
+        await query.message.edit_media(
+            media=InputMediaPhoto(media=BANNER_URL, caption=text, parse_mode="HTML"),
+            reply_markup=history_keyboard
+        )
+    except Exception:
+        await query.edit_message_text(text, parse_mode="HTML", reply_markup=history_keyboard)
 
 # --- Execution Entry Point ---
 if __name__ == "__main__":
