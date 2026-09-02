@@ -17,6 +17,7 @@ def run_flask():
 
 # --- Telegram Bot Configurations ---
 BANNER_URL = "https://files.catbox.moe/itqjoi.jpg"
+UPI_ID = "8876178391@paytm"  # Tumhara UPI ID
 
 def get_main_menu_keyboard():
     return InlineKeyboardMarkup([
@@ -33,7 +34,7 @@ async def main_menu(update, context):
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         "<blockquote expandable>\n"
         "├ 🛒 <b>Buy Now :</b> Click below to see all products & panels (Bala Mods, etc.)\n"
-        "├ 💳 <b>Add Balance :</b> Input custom deposit amount & verify transaction\n"
+        "├ 💳 <b>Add Balance :</b> Select amount to generate QR code & deposit\n"
         "├ 📜 <b>Deposit + Key History :</b> View all your past deposits & purchased keys\n"
         "├ ❓ <b>How To Use :</b> Watch step-by-step video guide\n"
         "└ 💬 <b>Support :</b> Contact via Telegram, Instagram & WhatsApp\n"
@@ -49,6 +50,53 @@ async def main_menu(update, context):
         await update.callback_query.edit_message_text(text, parse_mode="HTML", reply_markup=get_main_menu_keyboard(), link_preview_options=preview_options)
     else:
         await update.message.reply_text(text, parse_mode="HTML", reply_markup=get_main_menu_keyboard(), link_preview_options=preview_options)
+
+async def add_balance_callback(update, context):
+    query = update.callback_query
+    await query.answer()
+
+    amount_keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("💵 ₹50", callback_data="amt_50"), InlineKeyboardButton("💵 ₹100", callback_data="amt_100")],
+        [InlineKeyboardButton("💵 ₹200", callback_data="amt_200"), InlineKeyboardButton("💵 ₹500", callback_data="amt_500")],
+        [InlineKeyboardButton("💵 ₹1000", callback_data="amt_1000"), InlineKeyboardButton("✏️ Custom Amount", url="https://t.me/riaz_zayn")],
+        [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu", style="danger")]
+    ])
+
+    text = (
+        "<b>💳 ADD BALANCE - SELECT AMOUNT</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "Choose the amount you want to deposit into your account:\n\n"
+        "<i>Custom amount ke liye Admin ko direct message karein!</i>"
+    )
+    await query.edit_message_text(text, parse_mode="HTML", reply_markup=amount_keyboard)
+
+async def generate_qr_callback(update, context):
+    query = update.callback_query
+    await query.answer()
+
+    amount = query.data.split("_")[1]
+    
+    # Generate dynamic UPI QR Code URL
+    qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa={UPI_ID}%26pn=RIAZ99%26am={amount}%26cu=INR"
+
+    pay_keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("✅ Send Screenshot to Admin", url="https://t.me/riaz_zayn")],
+        [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu", style="danger")]
+    ])
+
+    text = (
+        f'<a href="{qr_url}">&#8203;</a>'
+        f"<b>⚡ SCAN & PAY ₹{amount} ⚡</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"<b>Amount:</b> <code>₹{amount}</code>\n"
+        f"<b>UPI ID:</b> <code>{UPI_ID}</code>\n\n"
+        "<b>Instructions:</b>\n"
+        "1. Upar dikh rahe QR code ko scan karke payment karein.\n"
+        "2. Payment hone ke baad <b>Screenshot + Transaction ID (UTR)</b> Admin ko bhejein.\n"
+        "3. Admin aapka balance 2 minutes me update kar dega!"
+    )
+    preview_options = LinkPreviewOptions(is_disabled=False, url=qr_url, prefer_large_media=True)
+    await query.edit_message_text(text, parse_mode="HTML", reply_markup=pay_keyboard, link_preview_options=preview_options)
 
 async def buy_now_callback(update, context):
     query = update.callback_query
@@ -82,9 +130,9 @@ async def how_to_use_callback(update, context):
     text = (
         "<b>❓ HOW TO USE THE BOT</b>\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "1. Tap <b>Add Balance</b> to deposit money via Admin.\n"
-        "2. Once balance is updated, select <b>Buy Now</b> to purchase keys/panels.\n"
-        "3. Check <b>Deposit + Key History</b> to view your past orders."
+        "1. Tap <b>Add Balance</b> and select an amount to generate a QR code.\n"
+        "2. Pay via UPI and send screenshot to Admin.\n"
+        "3. Balance add hone ke baad <b>Buy Now</b> se keys/panels kharidein!"
     )
     await query.edit_message_text(text, parse_mode="HTML", reply_markup=how_keyboard)
 
@@ -101,7 +149,7 @@ async def support_callback(update, context):
     text = (
         "<b>📞 RIAZ 99 OFFICIAL SUPPORT</b>\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "<i>If you face any payment or key issues, contact us directly through the links below:</i>\n\n"
+        "<i>If you face any payment or key issues, contact us directly:</i>\n\n"
         "<b>Telegram:</b> @riaz_zayn\n"
         "<b>WhatsApp:</b> +91 88761 78391"
     )
@@ -123,26 +171,6 @@ async def history_callback(update, context):
     )
     await query.edit_message_text(text, parse_mode="HTML", reply_markup=history_keyboard)
 
-async def add_balance_callback(update, context):
-    query = update.callback_query
-    await query.answer()
-
-    balance_keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("✈️ Contact via Telegram", url="https://t.me/riaz_zayn")],
-        [InlineKeyboardButton("💬 Contact via WhatsApp", url="https://wa.me/918876178391")],
-        [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu", style="danger")]
-    ])
-
-    text = (
-        "<b>💳 ADD BALANCE TO YOUR ACCOUNT</b>\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "<i>Contact Admin to get payment details (UPI/QR Code) & verify your deposit:</i>\n\n"
-        "<b>Telegram Admin:</b> @riaz_zayn\n"
-        "<b>WhatsApp Admin:</b> +91 88761 78391\n\n"
-        "<i>Send screenshot after completing payment!</i>"
-    )
-    await query.edit_message_text(text, parse_mode="HTML", reply_markup=balance_keyboard)
-
 # --- Execution Entry Point ---
 if __name__ == "__main__":
     threading.Thread(target=run_flask, daemon=True).start()
@@ -155,7 +183,7 @@ if __name__ == "__main__":
 
     app_bot = ApplicationBuilder().token(TOKEN).build()
 
-    # Registered Handlers
+    # Handlers Registration
     app_bot.add_handler(CommandHandler("start", main_menu))
     app_bot.add_handler(CallbackQueryHandler(main_menu, pattern="^main_menu$"))
     app_bot.add_handler(CallbackQueryHandler(buy_now_callback, pattern="^buy_now$"))
@@ -163,6 +191,7 @@ if __name__ == "__main__":
     app_bot.add_handler(CallbackQueryHandler(support_callback, pattern="^support$"))
     app_bot.add_handler(CallbackQueryHandler(history_callback, pattern="^history$"))
     app_bot.add_handler(CallbackQueryHandler(add_balance_callback, pattern="^add_balance$"))
+    app_bot.add_handler(CallbackQueryHandler(generate_qr_callback, pattern="^amt_"))
 
     print("Bot is polling...")
     app_bot.run_polling()
