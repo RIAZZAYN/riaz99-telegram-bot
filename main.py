@@ -67,4 +67,15 @@ async def history_callback(update, context):
         "<i>Select which history you want to check:</i>"
     )
     await query.edit_message_text(text, parse_mode="HTML", reply_markup=history_keyboard)
-    
+    import os
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Bot is Live!"
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
