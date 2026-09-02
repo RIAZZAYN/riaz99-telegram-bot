@@ -2,7 +2,7 @@ import os
 import threading
 from flask import Flask
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, LinkPreviewOptions
-from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler
+from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 
 # --- Flask Web Server Setup (For Render Port Binding) ---
 app = Flask(__name__)
@@ -28,13 +28,14 @@ def get_main_menu_keyboard():
     ])
 
 async def main_menu(update, context):
+    context.user_data['waiting_for_custom_amount'] = False
     text = (
         f'<a href="{BANNER_URL}">&#8203;</a>'
         "<b>👑 RIAZ 99 STORE 👑</b>\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         "<blockquote expandable>\n"
         "├ 🛒 <b>Buy Now :</b> Click below to see all products & panels (Bala Mods, etc.)\n"
-        "├ 💳 <b>Add Balance :</b> Select amount to generate QR code & deposit\n"
+        "├ 💳 <b>Add Balance :</b> Select or enter custom deposit amount\n"
         "├ 📜 <b>Deposit + Key History :</b> View all your past deposits & purchased keys\n"
         "├ ❓ <b>How To Use :</b> Watch step-by-step video guide\n"
         "└ 💬 <b>Support :</b> Contact via Telegram, Instagram & WhatsApp\n"
@@ -52,31 +53,80 @@ async def main_menu(update, context):
         await update.message.reply_text(text, parse_mode="HTML", reply_markup=get_main_menu_keyboard(), link_preview_options=preview_options)
 
 async def add_balance_callback(update, context):
+    context.user_data['waiting_for_custom_amount'] = False
     query = update.callback_query
     await query.answer()
 
     amount_keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("💵 ₹50", callback_data="amt_50"), InlineKeyboardButton("💵 ₹100", callback_data="amt_100")],
         [InlineKeyboardButton("💵 ₹200", callback_data="amt_200"), InlineKeyboardButton("💵 ₹500", callback_data="amt_500")],
-        [InlineKeyboardButton("💵 ₹1000", callback_data="amt_1000"), InlineKeyboardButton("✏️ Custom Amount", url="https://t.me/riaz_zayn")],
+        [InlineKeyboardButton("💵 ₹1000", callback_data="amt_1000"), InlineKeyboardButton("✏️ Custom Amount", callback_data="amt_custom")],
         [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu", style="danger")]
     ])
 
     text = (
         "<b>💳 ADD BALANCE - SELECT AMOUNT</b>\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "Choose the amount you want to deposit into your account:\n\n"
-        "<i>Custom amount ke liye Admin ko direct message karein!</i>"
+        "Choose a quick preset or tap <b>Custom Amount</b> to enter any value (e.g. ₹1, ₹10, ₹250):"
     )
     await query.edit_message_text(text, parse_mode="HTML", reply_markup=amount_keyboard)
+
+async def custom_amount_prompt(update, context):
+    query = update.callback_query
+    await query.answer()
+    
+    # State set kar rahe hain ki ab user message bheje toh wo amount mana jaye
+    context.user_data['waiting_for_custom_amount'] = True
+
+    cancel_keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu", style="danger")]
+    ])
+
+    text = (
+        "<b>✏️ ENTER CUSTOM AMOUNT</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "Niche chat box me jitna amount deposit karna hai wo number likhkar bhejo:\n\n"
+        "<i>Example: <code>1</code>, <code>10</code>, <code>150</code>, <code>2500</code></i>"
+    )
+    await query.edit_message_text(text, parse_mode="HTML", reply_markup=cancel_keyboard)
+
+async def handle_custom_amount_text(update, context):
+    # Agar bot user se amount text ki umeed kar raha hai
+    if context.user_data.get('waiting_for_custom_amount'):
+        user_input = update.message.text.strip()
+        
+        if user_input.isdigit() and int(user_input) > 0:
+            amount = user_input
+            context.user_data['waiting_for_custom_amount'] = False
+            
+            qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa={UPI_ID}%26pn=RIAZ99%26am={amount}%26cu=INR"
+
+            pay_keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton("✅ Send Screenshot to Admin", url="https://t.me/riaz_zayn")],
+                [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu", style="danger")]
+            ])
+
+            text = (
+                f'<a href="{qr_url}">&#8203;</a>'
+                f"<b>⚡ SCAN & PAY ₹{amount} ⚡</b>\n"
+                "━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"<b>Amount:</b> <code>₹{amount}</code>\n"
+                f"<b>UPI ID:</b> <code>{UPI_ID}</code>\n\n"
+                "<b>Instructions:</b>\n"
+                "1. Upar dikh rahe QR code ko scan karke payment karein.\n"
+                "2. Payment hone ke baad <b>Screenshot + Transaction ID (UTR)</b> Admin ko bhejein.\n"
+                "3. Admin aapka balance 2 minutes me update kar dega!"
+            )
+            preview_options = LinkPreviewOptions(is_disabled=False, url=qr_url, prefer_large_media=True)
+            await update.message.reply_text(text, parse_mode="HTML", reply_markup=pay_keyboard, link_preview_options=preview_options)
+        else:
+            await update.message.reply_text("❌ Please send a valid number (e.g. 1, 50, 100). Try again!")
 
 async def generate_qr_callback(update, context):
     query = update.callback_query
     await query.answer()
 
     amount = query.data.split("_")[1]
-    
-    # Generate dynamic UPI QR Code URL
     qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa={UPI_ID}%26pn=RIAZ99%26am={amount}%26cu=INR"
 
     pay_keyboard = InlineKeyboardMarkup([
@@ -130,7 +180,7 @@ async def how_to_use_callback(update, context):
     text = (
         "<b>❓ HOW TO USE THE BOT</b>\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "1. Tap <b>Add Balance</b> and select an amount to generate a QR code.\n"
+        "1. Tap <b>Add Balance</b> and select or enter an amount to generate a QR code.\n"
         "2. Pay via UPI and send screenshot to Admin.\n"
         "3. Balance add hone ke baad <b>Buy Now</b> se keys/panels kharidein!"
     )
@@ -191,7 +241,11 @@ if __name__ == "__main__":
     app_bot.add_handler(CallbackQueryHandler(support_callback, pattern="^support$"))
     app_bot.add_handler(CallbackQueryHandler(history_callback, pattern="^history$"))
     app_bot.add_handler(CallbackQueryHandler(add_balance_callback, pattern="^add_balance$"))
+    app_bot.add_handler(CallbackQueryHandler(custom_amount_prompt, pattern="^amt_custom$"))
     app_bot.add_handler(CallbackQueryHandler(generate_qr_callback, pattern="^amt_"))
+    
+    # Text input handler for custom amount
+    app_bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_custom_amount_text))
 
     print("Bot is polling...")
     app_bot.run_polling()
