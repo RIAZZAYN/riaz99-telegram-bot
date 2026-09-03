@@ -4,7 +4,7 @@ from flask import Flask
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 
-# --- Flask Web Server Setup ---
+# --- Flask Web Server Setup (for UptimeRobot) ---
 app = Flask(__name__)
 
 @app.route('/')
@@ -18,14 +18,15 @@ def run_flask():
 # --- Telegram Bot Configurations ---
 BANNER_URL = "https://files.catbox.moe/itqjoi.jpg"
 UPI_ID = "riaz99@slc"
-QR_IMAGE_URL = "https://files.catbox.moe/zfa47a.jpg"
+# Naya Clean Google Pay QR Image URL
+QR_IMAGE_URL = "https://files.catbox.moe/vzcxdz.jpeg"
 
 def get_main_menu_keyboard():
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("🟢 🛒 Buy Now (Products & Panels)", callback_data="buy_now", style="success")],
+        [InlineKeyboardButton("🟢 🛒 Buy Now (Products & Panels)", callback_data="buy_now")],
         [InlineKeyboardButton("📜 Deposit + Key History", callback_data="history")],
-        [InlineKeyboardButton("🟢 💳 Add Balance (₹)", callback_data="add_balance", style="success"), InlineKeyboardButton("❓ How To Use", callback_data="how_to_use")],
-        [InlineKeyboardButton("🔴 💬 Support (Admin)", callback_data="support", style="danger")]
+        [InlineKeyboardButton("🟢 💳 Add Balance (₹)", callback_data="add_balance"), InlineKeyboardButton("❓ How To Use", callback_data="how_to_use")],
+        [InlineKeyboardButton("🔴 💬 Support (Admin)", callback_data="support")]
     ])
 
 async def main_menu(update, context):
@@ -36,7 +37,7 @@ async def main_menu(update, context):
         "<b>👑 RIAZ 99 STORE 👑</b>\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         "<blockquote expandable>\n"
-        "├ 🛒 <b>Buy Now :</b> Click below to see all products & panels (Bala Mods, etc.)\n"
+        "├ 🛒 <b>Buy Now :</b> Click below to see all products & panels\n"
         "├ 💳 <b>Add Balance :</b> Select amount or use custom keypad\n"
         "├ 📜 <b>Deposit + Key History :</b> View all your past deposits & purchased keys\n"
         "├ ❓ <b>How To Use :</b> Watch step-by-step video guide\n"
@@ -70,7 +71,7 @@ async def add_balance_callback(update, context):
         [InlineKeyboardButton("💵 ₹50", callback_data="amt_50"), InlineKeyboardButton("💵 ₹100", callback_data="amt_100")],
         [InlineKeyboardButton("💵 ₹200", callback_data="amt_200"), InlineKeyboardButton("💵 ₹500", callback_data="amt_500")],
         [InlineKeyboardButton("💵 ₹1000", callback_data="amt_1000"), InlineKeyboardButton("⌨️ TYPE CUSTOM AMOUNT", callback_data="keypad_open")],
-        [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu", style="danger")]
+        [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu")]
     ])
 
     text = (
@@ -94,8 +95,8 @@ def build_keypad_keyboard():
         [InlineKeyboardButton("4", callback_data="kp_4"), InlineKeyboardButton("5", callback_data="kp_5"), InlineKeyboardButton("6", callback_data="kp_6")],
         [InlineKeyboardButton("7", callback_data="kp_7"), InlineKeyboardButton("8", callback_data="kp_8"), InlineKeyboardButton("9", callback_data="kp_9")],
         [InlineKeyboardButton("❌ CLEAR", callback_data="kp_clear"), InlineKeyboardButton("0", callback_data="kp_0"), InlineKeyboardButton("➡️ BACK", callback_data="kp_back")],
-        [InlineKeyboardButton("🟢 ✅ CONFIRM AMOUNT", callback_data="kp_confirm", style="success")],
-        [InlineKeyboardButton("🔴 ⬅️ Return to Quick Amounts", callback_data="add_balance", style="danger")]
+        [InlineKeyboardButton("🟢 ✅ CONFIRM AMOUNT", callback_data="kp_confirm")],
+        [InlineKeyboardButton("🔴 ⬅️ Return to Quick Amounts", callback_data="add_balance")]
     ])
 
 async def keypad_open_callback(update, context):
@@ -177,8 +178,8 @@ async def handle_text_input(update, context):
             amount = int(text_input)
 
             pay_keyboard = InlineKeyboardMarkup([
-                [InlineKeyboardButton("🟢 ✅ VERIFY PAYMENT", url="https://t.me/riaz_zayn", style="success")],
-                [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu", style="danger")]
+                [InlineKeyboardButton("🟢 ✅ VERIFY PAYMENT", url="https://t.me/riaz_zayn")],
+                [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu")]
             ])
             text = (
                 "<b>⚡ RIAZ 99 STORE — UPI QR ACTIVE ⚡</b>\n"
@@ -200,8 +201,8 @@ async def preset_amount_callback(update, context):
 
 async def show_qr_screen_direct(query, amount):
     pay_keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("🟢 ✅ VERIFY PAYMENT", url="https://t.me/riaz_zayn", style="success")],
-        [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu", style="danger")]
+        [InlineKeyboardButton("🟢 ✅ VERIFY PAYMENT", url="https://t.me/riaz_zayn")],
+        [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu")]
     ])
 
     text = (
@@ -228,7 +229,7 @@ async def buy_now_callback(update, context):
     await query.answer()
     buy_keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("💬 Contact Admin to Buy", url="https://t.me/riaz_zayn")],
-        [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu", style="danger")]
+        [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu")]
     ])
     text = (
         "<b>🛒 PRODUCTS & PANELS STORE</b>\n"
@@ -248,11 +249,31 @@ async def buy_now_callback(update, context):
     except Exception:
         await query.edit_message_text(text, parse_mode="HTML", reply_markup=buy_keyboard)
 
+async def history_callback(update, context):
+    query = update.callback_query
+    await query.answer()
+    history_keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu")]
+    ])
+    text = (
+        "<b>📜 DEPOSIT & KEY HISTORY</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "<i>Your past transactions and purchased keys will appear here.</i>\n\n"
+        "No recent records found."
+    )
+    try:
+        await query.message.edit_media(
+            media=InputMediaPhoto(media=BANNER_URL, caption=text, parse_mode="HTML"),
+            reply_markup=history_keyboard
+        )
+    except Exception:
+        await query.edit_message_text(text, parse_mode="HTML", reply_markup=history_keyboard)
+
 async def how_to_use_callback(update, context):
     query = update.callback_query
     await query.answer()
     how_keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu", style="danger")]
+        [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu")]
     ])
     text = (
         "<b>❓ HOW TO USE THE BOT</b>\n"
@@ -275,7 +296,7 @@ async def support_callback(update, context):
     support_keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("✈️ Telegram Support", url="https://t.me/riaz_zayn")],
         [InlineKeyboardButton("📸 Instagram", url="https://www.instagram.com/riaz_zayn/"), InlineKeyboardButton("💬 WhatsApp", url="https://wa.me/918876178391")],
-        [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu", style="danger")]
+        [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu")]
     ])
     text = (
         "<b>📞 RIAZ 99 OFFICIAL SUPPORT</b>\n"
@@ -292,49 +313,39 @@ async def support_callback(update, context):
     except Exception:
         await query.edit_message_text(text, parse_mode="HTML", reply_markup=support_keyboard)
 
-async def history_callback(update, context):
-    query = update.callback_query
-    await query.answer()
-    history_keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("📥 Deposit History", callback_data="view_deposits"), InlineKeyboardButton("🔑 Key History", callback_data="view_keys")],
-        [InlineKeyboardButton("🔴 ⬅️ Back to Main Menu", callback_data="main_menu", style="danger")]
-    ])
-    text = (
-        "<b>📜 YOUR ACCOUNT HISTORY</b>\n"
-        "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "<i>Select which history you want to check:</i>"
-    )
-    try:
-        await query.message.edit_media(
-            media=InputMediaPhoto(media=BANNER_URL, caption=text, parse_mode="HTML"),
-            reply_markup=history_keyboard
-        )
-    except Exception:
-        await query.edit_message_text(text, parse_mode="HTML", reply_markup=history_keyboard)
+def main():
+    # Start Flask server thread for UptimeRobot
+    t = threading.Thread(target=run_flask)
+    t.daemon = True
+    t.start()
 
-# --- Execution Entry Point ---
-if __name__ == "__main__":
-    threading.Thread(target=run_flask, daemon=True).start()
-
+    # Get Token from environment variables
     TOKEN = os.environ.get("BOT_TOKEN")
     if not TOKEN:
-        print("Error: BOT_TOKEN not found!")
-        exit(1)
+        print("❌ ERROR: BOT_TOKEN environment variable not found!")
+        return
 
-    app_bot = ApplicationBuilder().token(TOKEN).build()
+    application = ApplicationBuilder().token(TOKEN).build()
 
-    app_bot.add_handler(CommandHandler("start", main_menu))
-    app_bot.add_handler(CallbackQueryHandler(main_menu, pattern="^main_menu$"))
-    app_bot.add_handler(CallbackQueryHandler(add_balance_callback, pattern="^add_balance$"))
-    app_bot.add_handler(CallbackQueryHandler(keypad_open_callback, pattern="^keypad_open$"))
-    app_bot.add_handler(CallbackQueryHandler(keypad_press_callback, pattern="^kp_"))
-    app_bot.add_handler(CallbackQueryHandler(preset_amount_callback, pattern="^amt_"))
-    app_bot.add_handler(CallbackQueryHandler(buy_now_callback, pattern="^buy_now$"))
-    app_bot.add_handler(CallbackQueryHandler(how_to_use_callback, pattern="^how_to_use$"))
-    app_bot.add_handler(CallbackQueryHandler(support_callback, pattern="^support$"))
-    app_bot.add_handler(CallbackQueryHandler(history_callback, pattern="^history$"))
+    # Handlers
+    application.add_handler(CommandHandler("start", main_menu))
+    application.add_handler(CallbackQueryHandler(main_menu, pattern="^main_menu$"))
+    application.add_handler(CallbackQueryHandler(buy_now_callback, pattern="^buy_now$"))
+    application.add_handler(CallbackQueryHandler(history_callback, pattern="^history$"))
+    application.add_handler(CallbackQueryHandler(add_balance_callback, pattern="^add_balance$"))
+    application.add_handler(CallbackQueryHandler(how_to_use_callback, pattern="^how_to_use$"))
+    application.add_handler(CallbackQueryHandler(support_callback, pattern="^support$"))
     
-    app_bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_input))
+    # Preset & Keypad Handlers
+    application.add_handler(CallbackQueryHandler(preset_amount_callback, pattern="^amt_"))
+    application.add_handler(CallbackQueryHandler(keypad_open_callback, pattern="^keypad_open$"))
+    application.add_handler(CallbackQueryHandler(keypad_press_callback, pattern="^kp_"))
+    
+    # Text input handler for custom amount typing
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_input))
 
-    print("Bot is polling...")
-    app_bot.run_polling()
+    print("🚀 RIAZ 99 Bot is starting...")
+    application.run_polling()
+
+if __name__ == "__main__":
+    main()
